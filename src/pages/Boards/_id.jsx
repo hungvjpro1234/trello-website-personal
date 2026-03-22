@@ -1,7 +1,10 @@
 // Board Details
 import { Container } from '@mui/material'
 
-import Appbar from '../../components/AppBar'
+// Các file ngoài thư mục nên sử dụng absolute path
+import Appbar from '~/components/AppBar'
+
+// Các file trong cùng thư mục nên sử dụng relative path cho gọn cú pháp
 import BoardBar from './BoardBar'
 import BoardContent from './BoardContent'
 

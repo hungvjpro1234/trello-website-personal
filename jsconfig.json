@@ -1,0 +1,8 @@
+// Tạo file jsconfig.json để xử lý tác vụ: nhấn ctrl + click vào các link import sẽ route tới file đang được chỉ
+{
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./src/*"],
+    },
+  }
+}
