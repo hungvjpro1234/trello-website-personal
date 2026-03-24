@@ -1,0 +1,37 @@
+SET UP BAN ĐẦU : 
+
+// Version node : 18.16.0
+
+// cài đặt yarn : cài đặt các thư viện về sau bằng yarn thay vì npm
+npm install --global yarn
+
+// cài đặt vite : create react app chạy chậm khi build sản phẩm -> cải thiện dự án khi dự án nhiều module, build cấu trúc dự án react cơ bản ( không áp dụng cho next.js )
+yarn create vite@4.3.2
+  -> ( chọn option ) : JAVASCRIPT + SWC
+
+      // khởi tạo dự án (cài xong vite sẽ gợi ý) : 
+      yarn install
+
+      // bonus ( chưa chạy luôn ) : build dự án đẩy lên production
+      yarn build 
+
+      // code base có sẵn của dự án react : https://github.com/trungquandev/vite-trello-web-base-project
+
+// thay thế file .eslintrc.cjs bằng rule có sẵn: https://github.com/trungquandev/trungquandev-public-utilities-algorithms/blob/main/02-sample-eslint-config-for-react-project/.eslintrc.cjs
+
+// cài đặt material UI : 
+yarn add @mui/material@^5.13.0
+yarn add @emotion/react@^11.11.0
+yarn add @emotion/styled@^11.11.0
+yarn add @mui/icons-material@^5.11.16
+
+// Tạo jsconfig.json để cài đặt tác vụ -- tác vụ đầu tiên - đường dẫn tương đối, đường dẫn tuyệt đối : https://github.com/trungquandev/trungquandev-public-utilities-algorithms/blob/main/09-vite-absolute-relative-import/jsconfig.json
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+FRONT - END
+
+// Cài đặt plugin trong vite.config.js để sử dụng được Component SvgIcon -> bây giờ mới import được svgr vào vite.config.js
+yarn add vite-plugin-svgr@^3.2.0 -D
