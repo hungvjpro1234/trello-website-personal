@@ -4,6 +4,7 @@ import AppsIcon from '@mui/icons-material/Apps'
 import WorkSpace from './Menu/WorkSpace'
 import Recent from './Menu/Recent'
 import Starred from './Menu/Starred'
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd'
 // import trelloLogo from '~/assets/trello-icon.'
 import SvgIcon from '@mui/material/SvgIcon'
 import { ReactComponent as TrelloIcon } from '~/assets/trello-icon.svg'
@@ -54,7 +55,7 @@ function Appbar() {
           <Templates />
         </Box>
 
-        <Button variant="outlined">Create</Button>
+        <Button variant="outlined" startIcon={<LibraryAddIcon />}>Create</Button>
       </Box>
 
       {/* Khối sider phái */}
@@ -64,7 +65,7 @@ function Appbar() {
         {/* ModeSelect để switch giới trị giữa light và dark mode */}
         <ModeSelect sx={{ minWidth: 120 }}/>
 
-        {/* thẻ Tooltip để xử lý hover vào icon thông báo */}
+        {/* thẻ Tooltip để xử lý hover vào icon (trong ví dụ này là icon thông báo)*/}
         <Tooltip title="Notification">
           <Badge color="secondary" variant="dot" sx={{ cursor: 'pointer' }}>
             <NotificationsNoneIcon sx={{ color: 'primary.main' }}/>
