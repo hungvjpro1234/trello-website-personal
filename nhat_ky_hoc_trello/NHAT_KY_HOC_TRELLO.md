@@ -381,3 +381,317 @@ Cách code và cách làm việc rút ra:
 Việc tiếp theo:
 - 
 ```
+
+## Nhật ký giai đoạn dựng layout Trello
+
+### Buổi 5 - 2026-03-22 - Dựng khung layout đầu tiên cho trang Board
+
+Nguồn đối chiếu:
+- Commit `946fea1` - `Init layout`
+- Merge commit `4656e59` - merge nhánh `init_layout`
+- File chính: `src/App.jsx`, `src/theme.js`
+- Hình đối chiếu layout: `img_layout/example_layouyt.png`
+- Comment liên quan trong code ở `src/App.jsx`, `src/theme.js`
+
+Mình đã học được:
+- Sau khi có theme sáng/tối, bước hợp lý tiếp theo là dựng skeleton giao diện thật thay vì chỉ test bằng các button rời rạc.
+- `App.jsx` ở commit này không còn là nơi test component đơn lẻ nữa, mà bắt đầu đóng vai trò mô phỏng trang board với 3 vùng: header, board bar và board content.
+- `theme.js` được mở rộng thêm namespace `trello` để chứa các thông số layout như `appBarHeight` và `boardBarHeight`. Đây là bước chuyển từ việc chỉ quản lý màu sang quản lý cả token giao diện.
+- `Board Content` được tính chiều cao bằng công thức trừ đi tổng chiều cao của `App Bar` và `Board Bar`, cho thấy cách nghĩ theo layout tổng thể thay vì style từng khối riêng lẻ.
+
+Cách code và cách làm việc rút ra:
+- Khi bắt đầu dựng UI lớn, nên chốt trước bộ khung chiều cao, khu vực và quan hệ giữa các khối. Nếu chưa có skeleton ổn định thì về sau rất dễ chỉnh tay từng nơi và lệch layout.
+- Việc đưa các con số như `48px`, `56px` vào `theme.trello` là một pattern tốt: token hóa layout để sau này đổi một chỗ, toàn bộ vùng liên quan cập nhật theo.
+- Commit này còn cho thấy cách học rất thực tế: lấy tính năng đã có sẵn từ theme mode rồi áp trực tiếp vào layout mới, thay vì học từng mảnh tách rời.
+
+Điều mình cần nhớ:
+- `theme` không chỉ chứa màu. Khi dự án bắt đầu có cấu trúc giao diện rõ, `theme` còn là nơi chứa kích thước nền tảng.
+- Công thức `calc(100% - appBarHeight - boardBarHeight)` là kiến thức rất hay vì nó giúp chia layout theo chiều dọc một cách chủ động, tránh để nội dung bị tràn hoặc phải đo thủ công ở nhiều nơi.
+- Đây mới là khung đầu tiên nên còn đặt trực tiếp tất cả trong `App.jsx`. Điều này ổn ở bước dựng nhanh, nhưng về sau cần tách nhỏ để dễ quản lý.
+
+Việc tiếp theo lúc đó:
+- Tách layout thành các component và page riêng để giảm độ phình của `App.jsx`.
+
+Code quan trọng:
+
+```jsx
+trello: {
+  appBarHeight: '48px',
+  boardBarHeight: '56px'
+}
+```
+
+```jsx
+<Box
+  sx={{
+    height: (theme) =>
+      `calc(100% - ${theme.trello.appBarHeight} - ${theme.trello.boardBarHeight})`
+  }}
+>
+  Board Content
+</Box>
+```
+
+Luồng hoạt động:
+- `App.jsx` render một `Container` full height để chiếm toàn bộ viewport.
+- Bên trong `Container`, app chia lần lượt thành `Header`, `Board Bar`, rồi `Board Content`.
+- `Header` và `Board Bar` lấy chiều cao từ `theme.trello`.
+- `Board Content` không hard-code chiều cao mà tự tính phần còn lại dựa trên 2 token phía trên.
+- Nhờ đó, khi đổi chiều cao ở `theme.js`, toàn bộ layout dọc đổi theo cùng một nguồn.
+
+Cách dùng đã được áp dụng trong dự án:
+- Kiến thức về token layout đã được dùng trực tiếp trong `src/theme.js` để điều khiển toàn bộ khung trang board.
+- `src/App.jsx` ở giai đoạn này đóng vai trò nơi ráp khung tổng quát đầu tiên cho giao diện Trello Web.
+- Đây là bước chuẩn bị rất quan trọng cho việc tách `AppBar`, `BoardBar`, `BoardContent` thành các file riêng ở commit sau.
+
+Comment đáng chú ý:
+- Comment “Dùng bản sử dụng tạo ra bộ cơ sở trên theme.js” xuất hiện ở các khối layout cho thấy tư duy đang chuyển từ hard-code style sang dùng theme làm nguồn cấu hình chung.
+
+### Buổi 6 - 2026-03-22 - Refactor cấu trúc dự án theo page và component
+
+Nguồn đối chiếu:
+- Commit `793f782` - `Refactor Project Stucture`
+- Merge commit `4462874` - merge nhánh `refactor_project_structure`
+- Commit `2f16298` - `fix pj structure auth`
+- File chính: `src/App.jsx`, `src/pages/Boards/_id.jsx`, `src/components/AppBar/index.jsx`, `src/components/ModeSelect/index.jsx`, `src/pages/Boards/BoardBar/index.jsx`, `src/pages/Boards/BoardContent/index.jsx`, `src/pages/Auth/index.jsx`
+- Comment liên quan trong code ở `src/pages/Boards/_id.jsx`, `src/pages/Boards/BoardBar/index.jsx`, `src/pages/Boards/BoardContent/index.jsx`
+
+Mình đã học được:
+- `App.jsx` được làm gọn lại rất mạnh: thay vì chứa toàn bộ layout và logic chọn mode, nó chỉ còn import `Board` và render ra trang board.
+- Dự án bắt đầu có cấu trúc rõ hơn theo hướng `pages` và `components`. Những gì mang tính trang như board được đặt trong `src/pages/Boards`, còn phần dùng lại được như `AppBar`, `ModeSelect` được đặt trong `src/components`.
+- `BoardBar` và `BoardContent` được đặt bên trong thư mục `pages/Boards`, nghĩa là đây là component gắn chặt với ngữ cảnh trang board chứ chưa phải reusable component toàn app.
+- Commit `fix pj structure auth` tuy nhỏ nhưng có ý nghĩa: khi đã định hình structure thì cần tạo đủ các “điểm đặt chỗ” cho những miền chức năng chính như `Auth`, `Users`, `Boards`.
+
+Cách code và cách làm việc rút ra:
+- Refactor tốt là khi trách nhiệm của file rõ hơn sau khi tách. Ở đây `App.jsx` trở lại đúng vai trò cấp cao, còn phần layout cụ thể được đẩy xuống page-level.
+- Việc tách `ModeSelect` ra riêng là một bài học hay về cô lập logic tương tác khỏi layout chứa nó. Header chỉ cần dùng component đó thay vì hiểu chi tiết `useColorScheme`.
+- Tạo sẵn `pages/Auth`, `pages/Users`, `redux`, `utils` dù chưa dùng hết cũng là cách dựng bộ khung kiến trúc trước, để khi thêm tính năng không bị vá cấu trúc theo từng lần.
+
+Điều mình cần nhớ:
+- Không phải component nào cũng cần đưa vào `src/components`. Nếu nó gần như chỉ phục vụ một page, đặt cạnh page đó thường dễ đọc hơn.
+- Refactor structure không tạo ra tính năng mới ngay, nhưng nó làm giảm ma sát rất lớn cho các commit tiếp theo.
+- Những commit “rất nhỏ” như thêm `src/pages/Auth/index.jsx` đôi khi là dấu hiệu quan trọng cho thấy cấu trúc dự án đã được nghĩ theo bức tranh lớn hơn.
+
+Việc tiếp theo lúc đó:
+- Chuẩn hóa cách import để khi cấu trúc thư mục sâu dần thì đường dẫn vẫn dễ đọc.
+
+Code quan trọng:
+
+```jsx
+import Board from './pages/Boards/_id'
+
+function App() {
+  return (
+    <>
+      {/* React Router Dom /boards /boards/{board_id} */}
+      {/* Board Details */}
+      <Board />
+    </>
+  )
+}
+```
+
+```jsx
+function Board() {
+  return (
+    <Container maxWidth={false} disableGutters sx={{ height: '100vh' }}>
+      <Appbar />
+      <BoardBar />
+      <BoardContent />
+    </Container>
+  )
+}
+```
+
+Luồng chạy:
+- `main.jsx` vẫn là entry point toàn app và bọc app bằng provider theme như ở giai đoạn trước.
+- `App.jsx` trở thành lớp điều hướng cấp cao, hiện tại đang render `Board`.
+- `src/pages/Boards/_id.jsx` là nơi ráp các phần con của trang board.
+- `AppBar`, `BoardBar`, `BoardContent` mỗi file phụ trách một vùng giao diện riêng.
+- `ModeSelect` được `AppBar` dùng lại như một component con thay vì nằm trực tiếp trong `App.jsx`.
+
+Cách dùng đã được áp dụng trong dự án:
+- `src/pages/Boards/_id.jsx` đã trở thành nơi mô tả cấu trúc end-to-end của trang board.
+- `src/components/ModeSelect/index.jsx` giữ lại logic đổi mode và được tái sử dụng trong header.
+- `src/pages/Auth/index.jsx`, `src/pages/Users/index.jsx`, `src/pages/Users/_id.jsx` là các mốc chuẩn bị cho router và domain tách biệt về sau.
+
+Comment đáng chú ý:
+- Comment ở `BoardBar` nói rõ đây là component “hầu như chỉ sử dụng ở trang Board nên tách ra thành component bên trong page”. Đây là một ghi chú kiến trúc rất đáng giữ vì nó giải thích lý do đặt file, không chỉ mô tả chức năng.
+
+### Buổi 7 - 2026-03-22 - Chuẩn hóa absolute import và alias `~`
+
+Nguồn đối chiếu:
+- Commit `6d1bf67` - `realative-absolute-import`
+- Merge commit `75604b5` - merge nhánh `relative-absolute-import`
+- File chính: `jsconfig.json`, `vite.config.js`, `src/main.jsx`, `src/App.jsx`, `src/pages/Boards/_id.jsx`, `src/components/AppBar/index.jsx`
+- Comment liên quan trong code ở `jsconfig.json`, `vite.config.js`, `src/pages/Boards/_id.jsx`
+
+Mình đã học được:
+- Dự án thêm `jsconfig.json` để IDE hiểu alias `~/* -> ./src/*`. Nghĩa là không chỉ bundler chạy được, mà cả trải nghiệm điều hướng code khi học cũng được cải thiện.
+- `vite.config.js` thêm `resolve.alias` để runtime build hiểu `~` là `'/src'`.
+- Code bắt đầu thống nhất quy ước import: file ở ngoài thư mục thì dùng absolute path với `~`, file cùng thư mục thì giữ relative path cho gọn.
+- Đây là thay đổi nhỏ về cú pháp nhưng ảnh hưởng lớn đến khả năng đọc code khi dự án ngày càng sâu thư mục.
+
+Cách code và cách làm việc rút ra:
+- Khi dự án mới chỉ vài file, đường dẫn `../../..` chưa gây đau đầu. Nhưng nên chuẩn hóa sớm trước khi số lượng component và page tăng lên.
+- Một bài học rất hay ở commit này là phải đồng bộ 2 tầng cùng lúc:
+- IDE level: `jsconfig.json`.
+- Build tool level: `vite.config.js`.
+- Nếu chỉ làm một vế thì hoặc editor hiểu mà app không chạy, hoặc app chạy mà editor không hỗ trợ điều hướng.
+
+Điều mình cần nhớ:
+- Absolute import giúp file dễ di chuyển hơn vì ít phụ thuộc vào độ sâu thư mục hiện tại.
+- Relative import vẫn có chỗ đứng, nhất là khi import file cùng thư mục hoặc cùng module để code ngắn và biểu đạt “quan hệ gần”.
+- Quy ước import là một phần của kiến trúc dự án, không chỉ là chuyện viết cho đẹp.
+
+Việc tiếp theo lúc đó:
+- Tiếp tục dùng cấu trúc mới để dựng phần header chi tiết hơn và bắt đầu đưa asset SVG vào giao diện.
+
+Code quan trọng:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  }
+}
+```
+
+```js
+resolve: {
+  alias: [
+    { find: '~', replacement: '/src' }
+  ]
+}
+```
+
+```jsx
+// Các file ngoài thư mục nên sử dụng absolute path
+import Appbar from '~/components/AppBar'
+
+// Các file trong cùng thư mục nên sử dụng relative path cho gọn cú pháp
+import BoardBar from './BoardBar'
+import BoardContent from './BoardContent'
+```
+
+Luồng hoạt động:
+- Editor đọc `jsconfig.json` để hiểu alias `~`.
+- Vite đọc `vite.config.js` để resolve alias khi bundle.
+- Từ đó các file như `src/main.jsx`, `src/App.jsx`, `src/components/AppBar/index.jsx` có thể import từ `~/...`.
+- Trong từng module, các file cùng cấp vẫn dùng `./...` để biểu đạt đây là dependency nội bộ gần nhất.
+
+Cách dùng đã được áp dụng trong dự án:
+- `src/main.jsx` đã dùng `~/App.jsx` và `~/theme.js`.
+- `src/App.jsx` đã dùng `~/pages/Boards/_id`.
+- `src/pages/Boards/_id.jsx` áp dụng rõ cả hai quy ước: absolute path cho component ngoài module board, relative path cho `BoardBar` và `BoardContent`.
+
+Comment đáng chú ý:
+- Comment trong `src/pages/Boards/_id.jsx` không chỉ giải thích cách viết import, mà thực chất đang ghi lại một coding convention cho toàn repo.
+
+### Buổi 8 - 2026-03-24 - Dựng header cơ bản và đưa menu MUI vào App Bar
+
+Nguồn đối chiếu:
+- Commit `9ee8325` - `code header khung cơ bản`
+- Merge commit `b96cdac` - merge nhánh `Code-Header-AppBar`
+- File chính: `src/components/AppBar/index.jsx`, `src/components/AppBar/Menu/WorkSpace.jsx`, `src/components/AppBar/Menu/Recent.jsx`, `src/components/AppBar/Menu/Starred.jsx`, `src/components/AppBar/Menu/Templates.jsx`, `src/components/AppBar/Menu/Profiles.jsx`, `src/theme.js`, `vite.config.js`, `package.json`, `nhat_ky_hoc_trello/setup.txt`
+- Asset liên quan: `src/assets/trello-icon.svg`, `img_layout/app_bar.png`
+- Comment liên quan trong code ở toàn bộ cụm `src/components/AppBar/**`
+
+Mình đã học được:
+- `AppBar` được nâng từ một thanh trống chỉ chứa `ModeSelect` thành header có cấu trúc rõ ràng: cụm trái cho điều hướng và nhận diện thương hiệu, cụm phải cho search, đổi mode, thông báo, trợ giúp và tài khoản.
+- Dự án dùng `vite-plugin-svgr` để import SVG như React component, sau đó render bằng `SvgIcon`. Đây là một bước rất thực tế để dùng icon riêng mà vẫn đi theo hệ sinh thái MUI.
+- `AppBar` đang học theo kiểu “lấy khung từ docs MUI rồi ráp lại thành giao diện Trello”. Điều này thể hiện rất rõ qua các comment như “Dùng docs có sẵn của Menu trong MUI lib”, “API endIcon”, “Sử dụng MenuItem”.
+- `theme.trello` được cập nhật lại kích thước `appBarHeight` và `boardBarHeight`, nghĩa là khi header trở nên thực hơn thì token layout cũng phải cập nhật tương ứng.
+- File `setup.txt` được thêm vào thư mục nhật ký để lưu môi trường và các package cài đặt nền. Đây là một dạng “bối cảnh học tập dài hạn” rất có ích.
+
+Cách code và cách làm việc rút ra:
+- Khi dựng một phần UI lớn như header, nên tách từng cụm menu thành component riêng như `WorkSpace`, `Recent`, `Starred`, `Templates`, `Profiles`. Cách này giữ cho `AppBar/index.jsx` chỉ làm nhiệm vụ bố cục và lắp ghép.
+- Học theo docs tốt nhất là không copy nguyên khối rồi bỏ đó, mà gắn comment để biết mình đang mượn pattern nào, API nào, và dùng nó vào đâu trong dự án thật.
+- Việc đổi từ `@vitejs/plugin-react-swc` sang `@vitejs/plugin-react` kèm `@emotion/babel-plugin` cho thấy khi dùng MUI/Emotion sâu hơn thì đôi lúc cần chọn plugin phù hợp hơn với stack styling hiện tại.
+- Thêm file `setup.txt` là một bài học về cách lưu bối cảnh môi trường ngay trong repo. Khi học kéo dài nhiều buổi, việc nhớ “đã cài gì, vì sao cài” quan trọng không kém nhớ code.
+
+Điều mình cần nhớ:
+- Header không chỉ là phần nhìn thấy đầu tiên, mà còn là nơi gom nhiều pattern UI nhỏ: menu mở/đóng, icon custom, badge, tooltip, avatar menu, input search, switch theme.
+- `anchorEl -> open -> handleClick / handleClose` là flow nền tảng của rất nhiều component menu trong MUI. Một khi nắm được pattern này thì có thể tái sử dụng cho dropdown khác trong app.
+- SVG riêng của dự án nên được đưa vào pipeline build sớm để về sau dùng logo, icon domain-specific thuận lợi hơn.
+
+Việc tiếp theo:
+- Làm cho các menu bớt dữ liệu demo, thay bằng nội dung gắn với ngữ cảnh Trello thật.
+- Tiếp tục dựng `Board Bar` và `Board Content` chi tiết hơn để header không còn đứng một mình.
+- Khi bắt đầu có data thật, cần nối tiếp flow từ UI interaction của menu/search sang state và API.
+
+Code quan trọng:
+
+```jsx
+import SvgIcon from '@mui/material/SvgIcon'
+import { ReactComponent as TrelloIcon } from '~/assets/trello-icon.svg'
+
+<SvgIcon component={TrelloIcon} inheritViewBox sx={{ color: 'primary.main' }} />
+```
+
+```jsx
+<Box px={2} sx={{ height: (theme) => theme.trello.appBarHeight, display: 'flex', justifyContent: 'space-between' }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <WorkSpace />
+    <Recent />
+    <Starred />
+    <Templates />
+  </Box>
+
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <TextField label="Search..." type="search" size="small" />
+    <ModeSelect />
+    <Profile />
+  </Box>
+</Box>
+```
+
+```jsx
+const [anchorEl, setAnchorEl] = React.useState(null)
+const open = Boolean(anchorEl)
+
+const handleClick = (event) => {
+  setAnchorEl(event.currentTarget)
+}
+
+const handleClose = () => {
+  setAnchorEl(null)
+}
+```
+
+Luồng chạy end-to-end hiện tại:
+- `main.jsx` bọc app bằng `CssVarsProvider` để toàn bộ header dùng chung theme và mode hiện tại.
+- `App.jsx` render `Board`.
+- `src/pages/Boards/_id.jsx` render `AppBar` trước, rồi tới `BoardBar` và `BoardContent`.
+- `AppBar/index.jsx` chia giao diện thành 2 cụm trái/phải.
+- Mỗi menu như `WorkSpace`, `Recent`, `Templates`, `Profiles` tự quản lý state mở/đóng bằng `anchorEl`.
+- Người dùng click vào button hoặc avatar -> `handleClick` lấy `event.currentTarget` -> `open` chuyển sang `true` -> `Menu` mở ra tại đúng vị trí anchor.
+- Khi đóng menu -> `handleClose` set `anchorEl` về `null` -> `open` thành `false`.
+- Riêng `ModeSelect` vẫn giữ flow cũ: người dùng đổi lựa chọn -> `setMode(...)` cập nhật color scheme toàn app -> header đổi màu theo theme hiện tại.
+
+Cách dùng đã được áp dụng trong dự án:
+- `src/components/AppBar/index.jsx` đang là nơi áp dụng kiến thức bố cục header, chia khối trái/phải và dùng token chiều cao từ `theme.trello`.
+- Cụm `src/components/AppBar/Menu/*.jsx` áp dụng pattern menu chuẩn từ MUI docs vào các dropdown của thanh đầu trang.
+- `vite.config.js`, `package.json` và `src/assets/trello-icon.svg` cùng phối hợp để hỗ trợ icon SVG riêng của dự án.
+- `nhat_ky_hoc_trello/setup.txt` lưu lại môi trường ban đầu và các package nền như MUI, Yarn, Vite, `vite-plugin-svgr`.
+
+Comment đáng chú ý:
+- Comment “Dùng docs có sẵn của Menu trong MUI lib” lặp lại ở nhiều file menu. Điều này rất đáng giữ vì nó cho thấy rõ nguồn học và cũng nhắc mình rằng phần hiện tại là khung học tập, chưa phải business UI cuối cùng.
+- Comment “API endIcon để thêm icon vào cuối cùng button” là ví dụ tốt cho kiểu ghi chú ngắn nhưng bám đúng API đang học.
+
+## Tổng kết giai đoạn dựng layout và header
+
+Từ sau giai đoạn theme mode, dự án đã đi tiếp theo một lộ trình rất hợp lý:
+
+1. Dựng skeleton của trang board.
+2. Tách cấu trúc page/component để giảm độ phình của `App.jsx`.
+3. Chuẩn hóa import để code dễ đọc khi số file tăng lên.
+4. Bắt đầu dựng `AppBar` thật với nhiều pattern UI nhỏ ghép lại.
+
+Điều mình học được rõ nhất trong giai đoạn này là:
+- Theme tốt không chỉ quản màu mà còn quản token layout.
+- Structure tốt giúp flow của app hiện ra rõ hơn: `main.jsx` -> `App.jsx` -> `pages/Boards/_id.jsx` -> các component con.
+- Comment tốt không cần dài, nhưng nên nói rõ “đang học API nào”, “mượn từ docs nào” và “đã áp dụng vào đâu trong dự án”.
+- Khi học dự án thật, nên lưu cả môi trường cài đặt, ảnh layout mẫu, commit và code snippet vào chung một mạch nhật ký để lần sau mở lại không bị mất ngữ cảnh.

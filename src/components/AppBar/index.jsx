@@ -29,10 +29,12 @@ function Appbar() {
         height: (theme) => theme.trello.appBarHeight,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        gap: 2,
+        overflowX: 'auto'
       }
     }>
-      {/* Khối sider trái */}
+      {/* Khối Logo */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <AppsIcon sx={{ color: 'primary.main' }}/>
 
@@ -40,37 +42,37 @@ function Appbar() {
           {/* <img src={trelloLogo} alt="trello-logo" /> */}
           <SvgIcon component={TrelloIcon} inheritViewBox sx={{ color: 'primary.main' }}/>
 
-          {/* variant để chọn xem nội dung sẽ thuộc loại thẻ nào */}
+          {/* Typography để hiển thị text , variant để chọn xem nội dung sẽ thuộc loại thẻ nào */}
           <Typography variant='span' sx={{ color: 'primary.main', fontSize: '1.2rem', fontWeight: 'bold' }}> Trello </Typography>
         </Box>
 
-        <WorkSpace />
-
-        <Recent />
-
-        <Starred />
-
-        <Templates />
+        {/* Khối menu và button create */}
+        <Box sx={{ display: { xs: 'none', md: 'flex', gap: 1 } }}>
+          <WorkSpace />
+          <Recent />
+          <Starred />
+          <Templates />
+        </Box>
 
         <Button variant="outlined">Create</Button>
       </Box>
 
       {/* Khối sider phái */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <TextField id="outlined-search" label="Search..." type="search" size='small'/>
+        <TextField id="outlined-search" label="Search..." type="search" size='small' sx={{ minWidth: 120 }}/>
 
         {/* ModeSelect để switch giới trị giữa light và dark mode */}
-        <ModeSelect />
+        <ModeSelect sx={{ minWidth: 120 }}/>
 
         {/* thẻ Tooltip để xử lý hover vào icon thông báo */}
         <Tooltip title="Notification">
           <Badge color="secondary" variant="dot" sx={{ cursor: 'pointer' }}>
-            <NotificationsNoneIcon />
+            <NotificationsNoneIcon sx={{ color: 'primary.main' }}/>
           </Badge>
         </Tooltip>
 
         <Tooltip title="Help" sx={{ cursor: 'pointer' }}>
-          <HelpOutlineIcon />
+          <HelpOutlineIcon sx={{ color: 'primary.main' }}/>
         </Tooltip>
 
         <Profile />

@@ -9,7 +9,7 @@ const theme = extendTheme({
     boardBarHeight: '60px'
   },
 
-  // theme được custom
+  // đổi theme của giao diện
   colorSchemes: {
     light: {
       palette: {
@@ -32,6 +32,68 @@ const theme = extendTheme({
         }
       }
       // spacing: (factor) => `${0.25 * factor}rem`
+    }
+  },
+
+  components: {
+    // style lại scroll bar
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          '*::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px'
+          },
+          '*::-webkit-scrollbar-thumb': {
+            backgroundColor: '#bdc3c7',
+            borderRadius: '8px'
+          },
+          '*::-webkit-scrollbar-thumb:hover': {
+            backgroundColor: '#00b894',
+            borderRadius: '8px'
+          }
+        }
+      }
+    },
+    // style lại để các text trong các Button không tự viết hoa
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none'
+        }
+      }
+    },
+
+    // sửa màu chữ trong các label ( thường là chữ được hiển thị khi chưa nhập )
+    MuiInputLabel: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.main,
+          fontSize: '0.875rem'
+        })
+      }
+    },
+
+    // custom lại màu của thành phần trong input outlined
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.main,
+          fontSize: '0.875rem',
+          // không hover
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.light
+          },
+          // hover
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main
+          },
+          // reset để khi hover vào, border không bị đậm lên
+          '& fieldset': {
+            borderWidth: '1px !important'
+          }
+        })
+      }
     }
   }
 })
