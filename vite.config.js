@@ -15,6 +15,17 @@ export default defineConfig({
     svgr()
   ],
 
+  // Fix: styled_default is not a function (MUI + Emotion + Vite pre-bundling issue)
+  // Buộc Vite phải pre-bundle @emotion/styled cùng các MUI component trong một chunk
+  optimizeDeps: {
+    include: [
+      '@emotion/react',
+      '@emotion/styled',
+      '@mui/material/Tooltip',
+      '@mui/material/Popper'
+    ]
+  },
+
   // base: './'
   resolve: {
     alias: [

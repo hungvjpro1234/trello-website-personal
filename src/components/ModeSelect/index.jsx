@@ -44,7 +44,7 @@ function ModeSelect() {
 
   // Components chứa nút select chuyển đổi giới trị giữa light và dark mode
   return (
-    <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
+    <FormControl size="small" sx={{ minWidth: 120 }}>
       <InputLabel id="label-select-dark-light-mode">Mode</InputLabel>
       <Select
         labelId="select-dark-light-mode"
