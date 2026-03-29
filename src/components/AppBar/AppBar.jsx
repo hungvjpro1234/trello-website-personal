@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
-import ModeSelect from '~/components/ModeSelect'
+import ModeSelect from '~/components/ModeSelect/ModeSelect'
 import AppsIcon from '@mui/icons-material/Apps'
 import WorkSpace from './Menu/WorkSpace'
 import Recent from './Menu/Recent'
