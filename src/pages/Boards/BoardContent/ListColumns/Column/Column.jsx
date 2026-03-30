@@ -15,8 +15,9 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import AddCardIcon from '@mui/icons-material/AddCard'
 import DragHandleIcon from '@mui/icons-material/DragHandle'
 import ListCards from './ListCards/ListCards'
+import { mapOrder } from '~/utils/sorts'
 
-function Column() {
+function Column({ column }) {
   // Xử lý dropdown menu của column title
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
@@ -27,6 +28,10 @@ function Column() {
   const handleClose = () => {
     setAnchorEl(null)
   }
+
+  // Sắp xếp lại thứ tự các card theo đúng thứ tự đã lưu trong cardOrderIds của column
+  // -> trả về 1 mảng card đã được sắp xếp theo đúng thứ tự
+  const orderedCards = mapOrder(column?.cards, column?.cardOrderIds, '_id')
 
   return (
     // 1 Item cột, có thể map ra nhiều cột như này
@@ -54,7 +59,7 @@ function Column() {
           fontWeight: 'bold',
           cursor: 'pointer'
         }}>
-          Column Title
+          {column?.title}
         </Typography>
 
         <Box>
@@ -123,7 +128,7 @@ function Column() {
       </Box>
 
       {/* Box List Card */}
-      <ListCards />
+      <ListCards cards={ orderedCards }/>
 
       {/* Box Footer */}
       <Box sx={{

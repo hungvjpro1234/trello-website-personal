@@ -11,6 +11,7 @@ import AvatarGroup from '@mui/material/AvatarGroup'
 import { Tooltip } from '@mui/material'
 import Button from '@mui/material/Button'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import { capitalizeFirstLetter } from '~/utils/formatters'
 
 // style dùng chung của các item trên thanh Board Bar
 const MENU_STYLES = {
@@ -27,7 +28,7 @@ const MENU_STYLES = {
   }
 }
 
-function BoardBar() {
+function BoardBar({ board }) {
   return (
     /* Board Bar */
     <Box sx={{
@@ -48,14 +49,15 @@ function BoardBar() {
         <Chip
           sx = { MENU_STYLES }
           icon={<DashboardIcon />}
-          label="VuaDepTrai MERN Stack Board"
+          label={ board?.title }
           clickable
         />
 
         <Chip
           sx = { MENU_STYLES }
           icon={<VpnLockIcon />}
-          label="Public/Private WorkSpace"
+          // Không cần thiết phải kiểm tra kiểu dữ liệu của board?.type vì trong mockData đã đảm bảo rằng type luôn tồn tại và có giá trị hợp lệ ('public' hoặc 'private').
+          label={ capitalizeFirstLetter(board?.type) }
           clickable
         />
 
@@ -171,3 +173,9 @@ function BoardBar() {
 }
 
 export default BoardBar
+
+// L2 : Object destructuring : là một tính năng của JavaScript cho phép bạn trích xuất các giá trị từ một đối tượng và gán chúng cho các biến riêng biệt một cách dễ dàng và ngắn gọn hơn. Cú pháp của object destructuring sử dụng dấu ngoặc nhọn {} để chỉ định các thuộc tính mà bạn muốn trích xuất từ đối tượng.
+// Ví dụ: BoardBar({ board }) có thể được viết lại thành:
+// const BoardBar(props)
+// const { board } = props; để trích xuất giá trị của board từ props.
+// Tuy nhiên, bằng cách sử dụng object destructuring trực tiếp trong tham số của hàm, bạn có thể viết ngắn gọn hơn và tránh phải tạo thêm một biến trung gian props.
