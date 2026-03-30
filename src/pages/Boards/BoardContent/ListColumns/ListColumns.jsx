@@ -2,7 +2,7 @@ import { Box, Button } from '@mui/material'
 import Column from './Column/Column'
 import NoteAddIcon from '@mui/icons-material/NoteAdd'
 
-function ListColumns() {
+function ListColumns({ columns }) {
 
   return (
     // Box sinh ra để bọc các item, để có thể thao tác các css thuận tiện hơn, ví dụ làm thanh scroll không bị sát với item
@@ -17,8 +17,7 @@ function ListColumns() {
       '&::-webkit-scrollbar-track': { m: 2 }
     }}>
       {/* Các item cột */}
-      <Column />
-      <Column />
+      {columns.map(column => <Column key={column._id} column={column} />)}
 
       {/* Nút thêm cột */}
       <Box
