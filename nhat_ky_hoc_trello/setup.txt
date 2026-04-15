@@ -35,3 +35,7 @@ FRONT - END
 
 // Cài đặt plugin trong vite.config.js để sử dụng được Component SvgIcon -> bây giờ mới import được svgr vào vite.config.js
 yarn add vite-plugin-svgr@^3.2.0 -D
+
+add @dnd-kit/core@^6.0.8
+
+add @dnd-kit/sortable@^7.0.2
