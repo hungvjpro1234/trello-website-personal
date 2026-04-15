@@ -16,8 +16,25 @@ import AddCardIcon from '@mui/icons-material/AddCard'
 import DragHandleIcon from '@mui/icons-material/DragHandle'
 import ListCards from './ListCards/ListCards'
 import { mapOrder } from '~/utils/sorts'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 function Column({ column }) {
+  // Sử dụng hook useSortable của dnd-kit để biến mỗi cột thành một item có thể kéo thả được
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: column._id,
+    data: { ...column }
+  })
+
+  // Tạo style cho cột khi đang được kéo thả
+  const dndKitColumnStyle = {
+    // touchAction: 'none', // Tắt hành động chạm mặc định để tránh xung đột với hành vi kéo thả trên thiết bị di động
+
+    // Chuyển từ Transform sang Translate để kh kéo thả phần tử không bị thay đổi kích thước
+    transform: CSS.Translate.toString(transform),
+    transition
+  }
+
   // Xử lý dropdown menu của column title
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
@@ -35,17 +52,23 @@ function Column({ column }) {
 
   return (
     // 1 Item cột, có thể map ra nhiều cột như này
-    <Box sx={{
-      minWidth: '300px',
-      maxWidth: '300px',
-      bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#333643' : '#ebecf0'),
-      ml: 2,
-      borderRadius: '6px',
-      height: 'fit-content',
-      maxHeight: (theme) => `calc(${theme.trello.boardContentHeight} - ${theme.spacing(5)})`,
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <Box
+      ref={setNodeRef}
+      style={dndKitColumnStyle}
+      {...attributes}
+      {...listeners}
+      sx={{
+        minWidth: '300px',
+        maxWidth: '300px',
+        bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#333643' : '#ebecf0'),
+        ml: 2,
+        borderRadius: '6px',
+        height: 'fit-content',
+        maxHeight: (theme) => `calc(${theme.trello.boardContentHeight} - ${theme.spacing(5)})`,
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Box Header */}
       <Box sx={{
         height: (theme) => theme.trello.columnHeaderHeight,
