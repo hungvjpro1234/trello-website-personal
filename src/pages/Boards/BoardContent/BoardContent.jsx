@@ -14,6 +14,7 @@ import {
 } from '@dnd-kit/core'
 import { useEffect, useState } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
+import { cloneDeep } from 'lodash'
 
 import Column from './ListColumns/Column/Column'
 import Card from './ListColumns/Column/ListCards/Card/Card'
@@ -53,7 +54,7 @@ function BoardContent({ board }) {
   // state để quản lý thứ tự các column
   const [orderedColumnsState, setOrderedColumnsState] = useState([])
 
-  const [orderedColumns, setOrderedColumns] = useState([])
+  // const [orderedColumns, setOrderedColumns] = useState([])
 
   // Cùng một thời điểm chỉ có 1 phần từ đang được kéo (column hoặc card)
   const [activeDragItemId, setActiveDragItemId] = useState(null)
@@ -69,6 +70,12 @@ function BoardContent({ board }) {
     setOrderedColumnsState(orderedColumns)
   }, [board] )
 
+  // Tìm 1 column theo card Id
+  const findColumnByCardId = (cardId) => {
+    // Dùng cards để map mà không dùng cardOrderIds vì handleDragOver sẽ làm dữ liệu cho cards hoàn chỉnh trước rồi mới tạo cardOrderIds mới
+    return orderedColumnsState.find(column => column?.cards?.map(card => card._id)?.includes(cardId))
+  }
+
   // Trigger khi bắt đầu việc kéo (Drag) một phần tử (có thể là column hoặc card)
   const handleDragStart = (event) => {
     // console.log('handleDragStart :', event)
@@ -81,10 +88,89 @@ function BoardContent({ board }) {
     setActiveDragItemData(event?.active?.data?.current)
   }
 
+  // Trigger trong quá trình kéo thả khi phần tử đang được kéo đi qua một phần tử khác (over)
+  const handleDragOver = (event) => {
+    // console.log('handleDragOver :', event)
+
+    // Ko động tới column trong phần này vì start với end là đủ với column rồi
+    if (activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.COLUMN) return
+
+    // Nếu kéo thả card qua lại giữa các column thì xử lý thêm ở tất cả các phần dưới đây
+    const { active, over } = event
+
+    // Nếu kéo linh tinh ra ngoài -> return luôn, tránh lỗi, active tương tự
+    if (!active || !over) return
+
+    // activeDraggringCard là card đang được kéo
+    const {
+      id : activeDraggringCardId, 
+      data : { current: activeDraggingCardData }
+    } = active
+
+    // overCard là card bị đè lên khi kéo
+    const { id : overCardId } = over
+
+    // Tìm 2 columns theo card Id của active và over để biết được đang kéo card từ column nào sang column nào
+    const activeColumn = findColumnByCardId(activeDraggringCardId)
+    const overColumn = findColumnByCardId(overCardId)
+
+    if (!activeColumn || !overColumn) return
+
+    // chỉ xử lý khi kéo từ column này và thả ở column khác, cùng coulmn thì ko xử lý ( hàm chỉ xử lý trong handleDragOver )
+    if (activeColumn._id !== overColumn._id) {
+      setOrderedColumnsState(prevColumns =>{
+        // Tìm vị trí index của card bị đè lên (overCard) trong column mới (overColumn)
+        const overCardIndex = overColumn?.cards?.findIndex(card => card._id === overCardId)
+
+        // Xử lý giống docs của Dnd-kit, sau bước này sẽ có được VỊ TRÍ INDEX MỚI CỦA CARD sau khi kéo thả, dựa vào vị trí index của card bị đè lên (overCardIndex) và vị trí tương đối của card đang kéo so với card bị đè lên (isBelowOverItem):
+        let newCardIndex
+        const isBelowOverItem = active.rect.current.translated && active.rect.current.translated.top > over.rect.top + over.rect.height
+        const modifier = isBelowOverItem ? 1 : 0
+        newCardIndex = overCardIndex >= 0 ? overCardIndex + modifier : overColumn?.cards?.length + 1
+
+        // clone mảng OrderedColumnsState cũ sang một mảng mới để tránh việc thay đổi trực tiếp vào mảng cũ ( vì mảng cũ đang được sử dụng để render giao diện) , sau khi xử lý data xong sẽ return cập nhật lại OrderedColumnsState mới để re-render giao diện
+        const nextColumns = cloneDeep(prevColumns)
+
+        // Tìm lại 2 column trong mảng mới để cập nhật lại data cho 2 column này, vì sau khi cloneDeep thì các object column trong mảng mới sẽ khác với mảng cũ, nên cần tìm lại để cập nhật data cho đúng column
+        const nextActiveColumn = nextColumns.find(column => column._id === activeColumn._id)
+        const nextOverColumn = nextColumns.find(column => column._id === overColumn._id)
+
+        // column cũ
+        if (nextActiveColumn) {
+          // xóa card ở column cũ (activeColumn) đi, vì card đang được kéo sang column mới (overColumn), nên column cũ sẽ mất đi card đó
+          nextActiveColumn.cards = nextActiveColumn.cards.filter(card => card._id !== activeDraggringCardId)
+
+          // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
+          nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(card => card._id)
+        }
+
+        // column mới
+        if (nextOverColumn) {
+          // kiểm tra xem card đang kéo có tồn tại ở overColumn chưa, nếu có thì cần xóa trước
+          nextOverColumn.cards = nextOverColumn.cards.filter(card => card._id !== activeDraggringCardId)
+
+          // Thêm card đang kéo vào overColumn theo vị trí index mới
+          nextOverColumn.cards = nextOverColumn.cards.toSplice(newCardIndex, 0, activeDraggingCardData)
+
+          // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
+          nextOverColumn.cardOrderIds = nextOverColumn.cards.map(card => card._id)
+        }
+
+        return nextColumns
+      })
+    }
+  }
+
   // Trigger khi kết thúc việc thả (Drop) một phần tử (có thể là column hoặc card)
   const handleDragEnd = (event) => {
     // console.log('handleDragEnd :', event)
+
     const { active, over } = event
+
+    if (activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.CARD) {
+      // console.log('Hành động kéo thả Card, tạm thời ko làm gì cả')
+      return
+    }
 
     // Nếu kéo linh tinh ra ngoài -> return luôn, tránh lỗi
     if (!over) return
@@ -114,6 +200,7 @@ function BoardContent({ board }) {
     setActiveDragItemData(null)
   }
 
+
   // console.log('activeDragItemId: ', activeDragItemId)
   // console.log('activeDragItemType: ', activeDragItemType)
   // console.log('activeDragItemData: ', activeDragItemData)
@@ -133,6 +220,7 @@ function BoardContent({ board }) {
     <DndContext
       sensors={ sensors }
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={ handleDragEnd }
     >
       {/* Container để của phần board content, là phần tử cha to nhất, để chỉnh padding và margin cho toàn bộ phần content, tránh việc phải chỉnh cho từng phần tử con bên trong */}
@@ -172,7 +260,7 @@ export default BoardContent
 // L : active là column đang được kéo, over là column bị đè lên khi kéo.
 
 
-// L ( 152 ) : Cách dùng toán tử && thay cho if để render điều kiện trong React, a && <b /> tương đương với if (a) { return <b /> } else { return null } --> nếu điều kiện a thì render component b, ngược lại không render gì cả ( return null )
+// L ( 241 ) : Cách dùng toán tử && thay cho if để render điều kiện trong React, a && <b /> tương đương với if (a) { return <b /> } else { return null } --> nếu điều kiện a thì render component b, ngược lại không render gì cả ( return null )
 // Ví dụ :
 // {!activeDragItemType && null}
 //      tương đương với
@@ -192,3 +280,5 @@ export default BoardContent
 // L : DragOverlay là một component đặc biệt của dnd-kit, nó sẽ hiển thị phần tử đang được kéo (active) ở một vị trí cố định trên màn hình, không bị ảnh hưởng bởi layout của các phần tử khác, giúp cho việc kéo thả được mượt mà hơn và tránh bị lỗi khi kéo thả. Khi sử dụng DragOverlay, bạn có thể render phần tử đang được kéo (active) một cách tùy chỉnh, ví dụ như thay đổi style, thêm hiệu ứng, hoặc hiển thị thông tin chi tiết về phần tử đó. Trong trường hợp này, khi activeDragItemType là COLUMN thì sẽ render component Column với dữ liệu của column đang được kéo (activeDragItemData) bên trong DragOverlay để hiển thị phần tử column đang được kéo một cách tùy chỉnh.
 // Nói dễ hiểu thì DragOverlay là một lớp để giữ chỗ khi kéo thả, nó sẽ hiển thị phần tử đang được kéo ở một vị trí cố định trên màn hình
 
+
+// L : ( hàm handleDragOver - 153 ) : sau khi destructuring active, activeDraggingCardData chính là data của MỘT CARD , chính là card đang được kéo vì ở useSortable của component Card, useSortable đã nhận 2 giá trị là id: card._id và data: { ...card } nên các dữ liệu của data được đẩy vào current và Destructuring ra activeDraggingCardData -> có thể dùng activeDraggingCardData cho các tham số cần shape data là dữ liệu của Card
