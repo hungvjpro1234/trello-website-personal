@@ -12,26 +12,60 @@ import GroupIcon from '@mui/icons-material/Group'
 import CommentIcon from '@mui/icons-material/Comment'
 import AttachmentIcon from '@mui/icons-material/Attachment'
 
-function Card() {
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+function Card({ card }) {
+  // Sử dụng hook useSortable của dnd-kit để biến mỗi cột thành một item có thể kéo thả được
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card._id,
+    data: { ...card }
+  })
+
+  // Tạo style cho cột khi đang được kéo thả
+  const dndKitCardStyle = {
+    // touchAction: 'none', // Tắt hành động chạm mặc định để tránh xung đột với hành vi kéo thả trên thiết bị di động
+
+    // Chuyển từ Transform sang Translate để kh kéo thả phần tử không bị thay đổi kích thước
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+    border: isDragging ? '2px solid #2ecc71' : undefined
+  }
+
+  // Xác định xem có nên hiển thị các action của card hay không, nếu card có thành viên, bình luận hoặc tệp đính kèm thì hiển thị, nếu không thì ẩn đi để giao diện gọn hơn
+  const shouldShowCardActions =
+  card.memberIds.length > 0 ||
+  card.comments.length > 0 ||
+  card.attachments.length > 0
+
   return (
-    <MuiCard sx={{
-      cursor: 'pointer',
-      boxShadow:'0 1px 1px rgba(0, 0, 0, 0.2',
-      overflow: 'unset'
-    }}>
+    <MuiCard
+      ref={setNodeRef}
+      style={dndKitCardStyle}
+      {...attributes}
+      {...listeners}
+      sx={{
+        cursor: 'pointer',
+        boxShadow:'0 1px 1px rgba(0, 0, 0, 0.2)',
+        overflow: 'unset'
+      }
+      }>
       <CardMedia
         sx={{ height: 140 }}
-        image="https://scontent.fhan5-2.fna.fbcdn.net/v/t1.6435-9/102867957_327454421579632_8027934894137765875_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=b895b5&_nc_ohc=yhNdueDjdN0Q7kNvwGhumUN&_nc_oc=Adr7lBnY8uHIkHrAJY8CQaHA8VXS3pim9b36eDsRFVk-ZKFHQbig2kwTwJ_FumkVS_k&_nc_zt=23&_nc_ht=scontent.fhan5-2.fna&_nc_gid=Rqnj34qsTe1ksazq2iXWfQ&_nc_ss=7a32e&oh=00_AfxqoGTIxOyRmGkCNyt6xT4hVAVtu8iaQuaOnDuW37IdJw&oe=69EF68F6"
+        image="https://cdn.pixabay.com/photo/2026/04/15/08/51/08-51-12-349_1280.jpg"
         title="green iguana"
       />
       <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Typography >Vua Dep Trai</Typography>
       </CardContent>
-      <CardActions sx={{ p: '0 4px 8px 4px' }}>
-        <Button size="small" startIcon={<GroupIcon />}>20</Button>
-        <Button size="small" startIcon={<CommentIcon />}>20</Button>
-        <Button size="small" startIcon={<AttachmentIcon />}>20</Button>
-      </CardActions>
+      {shouldShowCardActions &&
+        <CardActions sx={{ p: '0 4px 8px 4px' }}>
+          <Button size="small" startIcon={<GroupIcon />}>20</Button>
+          <Button size="small" startIcon={<CommentIcon />}>20</Button>
+          <Button size="small" startIcon={<AttachmentIcon />}>20</Button>
+        </CardActions>
+      }
     </MuiCard>
   )
 }

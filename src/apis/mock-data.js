@@ -20,7 +20,7 @@ export const mockData = {
             columnId: 'column-id-01',
             title: 'Title of card 01',
             description: 'Markdown Syntax (sẽ ở khóa nâng cao nhé)',
-            cover: 'https://scontent.fhan5-2.fna.fbcdn.net/v/t1.6435-9/102867957_327454421579632_8027934894137765875_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=b895b5&_nc_ohc=yhNdueDjdN0Q7kNvwGhumUN&_nc_oc=Adr7lBnY8uHIkHrAJY8CQaHA8VXS3pim9b36eDsRFVk-ZKFHQbig2kwTwJ_FumkVS_k&_nc_zt=23&_nc_ht=scontent.fhan5-2.fna&_nc_gid=Rqnj34qsTe1ksazq2iXWfQ&_nc_ss=7a32e&oh=00_AfxqoGTIxOyRmGkCNyt6xT4hVAVtu8iaQuaOnDuW37IdJw&oe=69EF68F6',
+            cover: 'https://cdn.pixabay.com/photo/2024/12/10/20/52/ballerina-9258598_1280.jpg',
             memberIds: ['test-user-id-01'],
             comments: ['test comment 01', 'test comment 02'],
             attachments: ['test attachment 01', 'test attachment 02', 'test attachment 03']
