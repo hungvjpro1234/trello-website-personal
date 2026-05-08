@@ -14,8 +14,11 @@ import AttachmentIcon from '@mui/icons-material/Attachment'
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { buildCardCoverUrl } from '~/utils/mockImages'
 
 function Card({ card }) {
+  const cardCover = card?.cover || buildCardCoverUrl(card._id)
+
   // Sử dụng hook useSortable của dnd-kit để biến mỗi cột thành một item có thể kéo thả được
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card._id,
@@ -48,22 +51,22 @@ function Card({ card }) {
       sx={{
         cursor: 'pointer',
         boxShadow:'0 1px 1px rgba(0, 0, 0, 0.2)',
-        overflow: 'unset'
+        overflow: 'hidden'
       }
       }>
       <CardMedia
         sx={{ height: 140 }}
-        image="https://cdn.pixabay.com/photo/2026/04/15/08/51/08-51-12-349_1280.jpg"
-        title="green iguana"
+        image={cardCover}
+        title={card?.title}
       />
       <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Typography >Vua Dep Trai</Typography>
+        <Typography>{card?.title}</Typography>
       </CardContent>
       {shouldShowCardActions &&
         <CardActions sx={{ p: '0 4px 8px 4px' }}>
-          <Button size="small" startIcon={<GroupIcon />}>20</Button>
-          <Button size="small" startIcon={<CommentIcon />}>20</Button>
-          <Button size="small" startIcon={<AttachmentIcon />}>20</Button>
+          <Button size="small" startIcon={<GroupIcon />}>{card.memberIds.length}</Button>
+          <Button size="small" startIcon={<CommentIcon />}>{card.comments.length}</Button>
+          <Button size="small" startIcon={<AttachmentIcon />}>{card.attachments.length}</Button>
         </CardActions>
       }
     </MuiCard>

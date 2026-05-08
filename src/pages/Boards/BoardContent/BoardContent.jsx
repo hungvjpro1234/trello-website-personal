@@ -150,7 +150,7 @@ function BoardContent({ board }) {
           nextOverColumn.cards = nextOverColumn.cards.filter(card => card._id !== activeDraggringCardId)
 
           // Thêm card đang kéo vào overColumn theo vị trí index mới
-          nextOverColumn.cards = nextOverColumn.cards.toSplice(newCardIndex, 0, activeDraggingCardData)
+          nextOverColumn.cards = nextOverColumn.cards.toSpliced(newCardIndex, 0, activeDraggingCardData)
 
           // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
           nextOverColumn.cardOrderIds = nextOverColumn.cards.map(card => card._id)
@@ -260,7 +260,7 @@ export default BoardContent
 // L : active là column đang được kéo, over là column bị đè lên khi kéo.
 
 
-// L ( 241 ) : Cách dùng toán tử && thay cho if để render điều kiện trong React, a && <b /> tương đương với if (a) { return <b /> } else { return null } --> nếu điều kiện a thì render component b, ngược lại không render gì cả ( return null )
+// L ( 152 ) : Cách dùng toán tử && thay cho if để render điều kiện trong React, a && <b /> tương đương với if (a) { return <b /> } else { return null } --> nếu điều kiện a thì render component b, ngược lại không render gì cả ( return null )
 // Ví dụ :
 // {!activeDragItemType && null}
 //      tương đương với
