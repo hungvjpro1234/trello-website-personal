@@ -77,7 +77,7 @@ function BoardContent({ board }) {
   // Tìm 1 column theo card Id
   const findColumnByCardId = (cardId) => {
     // Dùng cards để map mà không dùng cardOrderIds vì handleDragOver sẽ làm dữ liệu cho cards hoàn chỉnh trước rồi mới tạo cardOrderIds mới
-    return orderedColumnsState.find(column => column?.cards?.map(card => card._id)?.includes(cardId))
+    return orderedColumnsState.find(column => column?.cards?.some(card => card._id === cardId))
   }
 
   // function chung xử lý việc di chuyển Card giữa các Column khác nhau
@@ -225,8 +225,8 @@ function BoardContent({ board }) {
 
       if (!activeColumn || !overColumn) return
 
-      // Kéo thả card giữa 2 column khác nhau ( logic tương tự trong handleDragOver )
-      // Phải dùng tới oldColumnWhenDraggingCard ( hoặc activeDragItemData.columnId ) thay vì activeColumn trong scope này vì sau khi đi qua onDragOver thì orderColumnState đã bị thay đổi
+      // Kéo thả card giữa 2 column khác nhau.
+      // Trạng thái UI đã được cập nhật tạm thời ở onDragOver rồi, nên tới DragEnd chỉ cần chốt logic/API nếu có.
       if (oldColumnWhenDraggingCard._id !== overColumn._id) {
         moveCardBetweenDeifferentColumns(
           overColumn,
@@ -343,12 +343,12 @@ function BoardContent({ board }) {
 
           {/* Lớp phủ khi bắt đầu kéo(drag), sẽ render ra 1 column mờ mờ (content giống hệt column đang kéo), mất khi drop */}
           {(activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.COLUMN ) &&
-            <Column column={activeDragItemData} />
+            <Column column={activeDragItemData} dndDisabled />
           }
 
           {/* Lớp phủ khi bắt đầu kéo(drag), sẽ render ra 1 card mờ mờ (content giống hệt card đang kéo), mất khi drop */}
           {(activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.CARD) &&
-            <Card card={activeDragItemData} />
+            <Card card={activeDragItemData} dndDisabled />
           }
         </DragOverlay>
       </Box>
@@ -390,3 +390,5 @@ export default BoardContent
 // L : (68) : khi xử lý kéo Card, ở handleDragEnd không thể sử dụng trực tiếp activeColumn vì state orderedColumnsState đã bị thay đổi ngay trong handleDragOver --> activeColumn lúc này bên trong active ở handleDragEnd không còn đúng ý nghĩa ban đầu ( card này xuất phát từ cột nào ) --> phải tạo lại 1 state chỉ lưu trạng thái của column trước khi card được kéo đi để thực hiện thay đổi khi xử lý tới handleDragEnd chính là state oldColumnWhenDraggingCard, state này sẽ được set ở handleDragStart khi bắt đầu kéo card, và sẽ được reset lại sau khi kết thúc việc thả card ở handleDragEnd để kết thúc vòng đời của state này, tránh việc state này bị sai lệch khi kéo thả nhiều lần ( overColumn vẫn dùng được vì vốn overColumn mang ý nghĩa cột chứa card ngay trước khi drop )
 
 // L : (223) : hàm find : khi tập con sinh ra từ hàm find thay đổi, hàm cha ( hàm gốc ban đầu ) cũng thay đổi theo
+
+// L : (338, 343) : dndDisabled được truyền vào như cờ chỉ để check true false cho phần disable của useSortable, khi kéo thả column thì sẽ disable kéo thả card và ngược lại, để tránh lỗi khi kéo thả
