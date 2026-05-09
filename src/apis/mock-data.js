@@ -63,7 +63,7 @@ export const mockData = {
       Dữ liệu:
       Id unique : "columnId-placeholder-card" ( 1 column tối đa 1 card )
       bắt buộc : _id, boardId, columnId, FE_PlaceHolderCard
-      */ 
+      */
       {
         _id: 'column-id-04',
         boardId: 'board-id-01',
