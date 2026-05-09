@@ -16,13 +16,23 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { buildCardCoverUrl } from '~/utils/mockImages'
 
-function Card({ card }) {
-  const cardCover = card?.cover || buildCardCoverUrl(card._id)
+function Card({ card, dndDisabled = false }) {
+  const safeCard = {
+    ...card,
+    // ghi đè các trường có thể undefined để tránh lỗi render UI
+    memberIds: card?.memberIds || [],
+    comments: card?.comments || [],
+    attachments: card?.attachments || []
+  }
+
+  const cardCover = safeCard?.cover || buildCardCoverUrl(safeCard?._id || 'card-fallback')
 
   // Sử dụng hook useSortable của dnd-kit để biến mỗi cột thành một item có thể kéo thả được
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: card._id,
-    data: { ...card }
+    id: safeCard._id,
+    data: { ...safeCard },
+    // được truyền từ boardContent
+    disabled: dndDisabled
   })
 
   // Tạo style cho cột khi đang được kéo thả
@@ -38,9 +48,9 @@ function Card({ card }) {
 
   // Xác định xem có nên hiển thị các action của card hay không, nếu card có thành viên, bình luận hoặc tệp đính kèm thì hiển thị, nếu không thì ẩn đi để giao diện gọn hơn
   const shouldShowCardActions =
-  card.memberIds.length > 0 ||
-  card.comments.length > 0 ||
-  card.attachments.length > 0
+  safeCard.memberIds.length > 0 ||
+  safeCard.comments.length > 0 ||
+  safeCard.attachments.length > 0
 
   return (
     <MuiCard
@@ -57,16 +67,16 @@ function Card({ card }) {
       <CardMedia
         sx={{ height: 140 }}
         image={cardCover}
-        title={card?.title}
+        title={safeCard?.title}
       />
       <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Typography>{card?.title}</Typography>
+        <Typography>{safeCard?.title}</Typography>
       </CardContent>
       {shouldShowCardActions &&
         <CardActions sx={{ p: '0 4px 8px 4px' }}>
-          <Button size="small" startIcon={<GroupIcon />}>{card.memberIds.length}</Button>
-          <Button size="small" startIcon={<CommentIcon />}>{card.comments.length}</Button>
-          <Button size="small" startIcon={<AttachmentIcon />}>{card.attachments.length}</Button>
+          <Button size="small" startIcon={<GroupIcon />}>{safeCard.memberIds.length}</Button>
+          <Button size="small" startIcon={<CommentIcon />}>{safeCard.comments.length}</Button>
+          <Button size="small" startIcon={<AttachmentIcon />}>{safeCard.attachments.length}</Button>
         </CardActions>
       }
     </MuiCard>
