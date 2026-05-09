@@ -11,11 +11,16 @@ import {
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
-  closestCorners
+  closestCorners,
+  pointerWithin,
+  // rectIntersection,
+  getFirstCollision
+  // closestCenter
 } from '@dnd-kit/core'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
-import { cloneDeep, set } from 'lodash'
+import { cloneDeep, isEmpty } from 'lodash'
+import { generatePlaceholderCard } from '~/utils/formatters'
 
 import Column from './ListColumns/Column/Column'
 import Card from './ListColumns/Column/ListCards/Card/Card'
@@ -67,6 +72,9 @@ function BoardContent({ board }) {
   // state sinh ra chỉ để lưu lại column khi bắt đầu kéo ở onDragStart ( chỉ áp dụng kéo thả card )
   const [oldColumnWhenDraggingCard, setOldColumnWhenDraggingCard] = useState(null)
 
+  // Điểm va chạm cuối cùng trước đó ( xử lý thuật toán phát hiện va chạm )
+  const lastOverId = useRef(null)
+
   // Sử dụng useEffect để sắp xếp lại thứ tự các column khi nhận được props board mới
   useEffect(() => {
     // Sắp xếp lại thứ tự các column theo đúng thứ tự đã lưu trong columnOrderIds của board -> trả về 1 mảng column đã được sắp xếp theo đúng thứ tự
@@ -112,6 +120,12 @@ function BoardContent({ board }) {
         // xóa card ở column cũ (activeColumn) đi, vì card đang được kéo sang column mới (overColumn), nên column cũ sẽ mất đi card đó
         nextActiveColumn.cards = nextActiveColumn.cards.filter(card => card._id !== activeDraggringCardId)
 
+        // Thêm Placeholder Card nếu Column rỗng : bị kéo hết Card đi, không còn Card nào nữa
+        if (isEmpty(nextActiveColumn.cards)) {
+          // console.log('Card cuối cùng bị kéo đi')
+          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)]
+        }
+
         // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
         nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(card => card._id)
       }
@@ -131,9 +145,14 @@ function BoardContent({ board }) {
         // Thêm card đang kéo vào overColumn theo vị trí index mới
         nextOverColumn.cards = nextOverColumn.cards.toSpliced(newCardIndex, 0, rebuild_activeDraggingCardData)
 
+        // Xóa Placeholder Card đi nếu nó đang tồn tại ( filter xong thì hàm filter sẽ gắn ngược lại nextOverColumn.cards )
+        nextOverColumn.cards = nextOverColumn.cards.filter(card => !card.FE_PlaceHolderCard)
+
         // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
         nextOverColumn.cardOrderIds = nextOverColumn.cards.map(card => card._id)
       }
+
+      //console.log('nextColumns :', nextColumns)
 
       return nextColumns
     })
@@ -315,10 +334,64 @@ function BoardContent({ board }) {
     })
   }
 
+  // Hàm xử lý thuật toán phát hiện va chạm (collision detection) khi kéo thả, để xác định phần tử nào đang bị đè lên (over) khi kéo phần tử khác (active)
+  const collisionDetectionStrategy = useCallback((args) => {
+    // Nếu là kéo thả cột, dùng closestCorners như thuật toán phát hiện va chạm mặc định của dnd-kit
+    if (activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.COLUMN) {
+      return closestCorners(args)
+    }
+
+    // tìm các điểm giao nhau / va chạm với con trỏ, trả về mảng va chạm
+    const pointerIntersections = pointerWithin(args)
+    // console.log('Pointer Intersections: ', pointerIntersections)
+
+    // Nếu kéo ra ngoài hẳn --> không làm gì cả để tránh lỗi, nếu không có va chạm nào thì cũng không làm gì cả
+    if (!pointerIntersections?.length) return
+
+    // // thuật toán phát hiện va chạm trả về mảng các va chạm ở đây
+    // const intersections = pointerIntersections?.length > 0
+    //   ? pointerIntersections
+    //   : rectIntersection(args)
+
+    // Tìm overId đầu tiên trong đám intersections ở trên
+    let overId = getFirstCollision(pointerIntersections, 'id')
+
+    if (overId) {
+      // Ý tưởng chính đoạn này : Nếu over là column thì sẽ tìm tới cardId gần nhất bên trong khu vực va chạm đó dựa vào thuật toán phát hiện va chạm closestCorners hoặc closestCenter.
+      // B1 : Tìm column có id trùng với overId 
+      const intersectColumn = orderedColumnsState.find(column => column._id === overId)
+
+      // B2 : Nếu tìm thấy column đó thì sẽ tiếp tục tìm cardId gần nhất bên trong column đó dựa vào thuật toán phát hiện va chạm closestCorners hoặc closestCenter, và gán lại overId bằng cardId đó
+      if (intersectColumn) {
+        // console.log('overId before: ', overId)
+
+        overId = closestCorners({
+          ...args,
+          droppableContainers: args.droppableContainers.filter(container => {
+            // Loại chính cột đó ( ko quan trọng lắm, chủ yếu là để defense )
+            return (container.id !== overId)
+            // điều kiện chính : loại cột ko có container.id trong mảng cardOrderIds (chắc chắn chỉ có cột đang bị drop mới có container.id trong mảng cardOrderIds) -> sau check này sẽ trả ra mảng các container chỉ có các card bên trong cloumn đang xét ( ko phải tất cả card trong cardOrderIds )
+              && (intersectColumn?.cardOrderIds?.includes(container.id))
+          })
+          // Lấy card có index 0
+        })[0]?.id
+
+        // console.log('overId after: ', overId)
+      }
+      lastOverId.current = overId
+      return [{ id: overId }]
+    }
+
+    // Nếu OverId null thì trả về mảng rỗng - tránh bug, crash trang
+    return lastOverId.current ? [{ id: lastOverId.current }] : []
+  }, [activeDragItemType, orderedColumnsState])
+
   return (
     <DndContext
-      // phát hiện va chạm
-      collisionDetection={closestCorners}
+      // phát hiện va chạm ( dùng closestCorners bị lỗi flickering )
+      // collisionDetection={closestCorners}
+      collisionDetection={collisionDetectionStrategy}
+
       // Cảm biến
       sensors={ sensors }
 
@@ -391,4 +464,6 @@ export default BoardContent
 
 // L : (223) : hàm find : khi tập con sinh ra từ hàm find thay đổi, hàm cha ( hàm gốc ban đầu ) cũng thay đổi theo
 
-// L : (338, 343) : dndDisabled được truyền vào như cờ chỉ để check true false cho phần disable của useSortable, khi kéo thả column thì sẽ disable kéo thả card và ngược lại, để tránh lỗi khi kéo thả
+// L : (338, 343) : dndDisabled được truyền vào component Column như cờ chỉ để check true false cho phần disable của useSortable, khi kéo thả column thì sẽ disable kéo thả card và ngược lại, để tránh lỗi khi kéo thả
+
+// L : (useCallback - 348) : hàm trong React, dùng để memoize một hàm, tức là chỉ tạo lại hàm đó khi các dependencies của nó thay đổi, giúp tối ưu hiệu suất bằng cách tránh việc tạo lại hàm không cần thiết trong mỗi lần render. Trong trường hợp này, hàm collisionDetectionStrategy được memoize bằng useCallback để đảm bảo rằng nó chỉ được tạo lại khi activeDragItemType thay đổi ( khi đổi kiểu kéo thả từ column sang card hoặc ngược lại )
