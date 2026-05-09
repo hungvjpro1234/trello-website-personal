@@ -19,7 +19,8 @@ import {
 } from '@dnd-kit/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
-import { cloneDeep, last, set } from 'lodash'
+import { cloneDeep, isEmpty } from 'lodash'
+import { generatePlaceholderCard } from '~/utils/formatters'
 
 import Column from './ListColumns/Column/Column'
 import Card from './ListColumns/Column/ListCards/Card/Card'
@@ -119,6 +120,12 @@ function BoardContent({ board }) {
         // xóa card ở column cũ (activeColumn) đi, vì card đang được kéo sang column mới (overColumn), nên column cũ sẽ mất đi card đó
         nextActiveColumn.cards = nextActiveColumn.cards.filter(card => card._id !== activeDraggringCardId)
 
+        // Thêm Placeholder Card nếu Column rỗng : bị kéo hết Card đi, không còn Card nào nữa
+        if (isEmpty(nextActiveColumn.cards)) {
+          // console.log('Card cuối cùng bị kéo đi')
+          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)]
+        }
+
         // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
         nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(card => card._id)
       }
@@ -138,9 +145,14 @@ function BoardContent({ board }) {
         // Thêm card đang kéo vào overColumn theo vị trí index mới
         nextOverColumn.cards = nextOverColumn.cards.toSpliced(newCardIndex, 0, rebuild_activeDraggingCardData)
 
+        // Xóa Placeholder Card đi nếu nó đang tồn tại ( filter xong thì hàm filter sẽ gắn ngược lại nextOverColumn.cards )
+        nextOverColumn.cards = nextOverColumn.cards.filter(card => !card.FE_PlaceHolderCard)
+
         // cập nhật mảng cardOrderIds cho chuẩn dữ liệu
         nextOverColumn.cardOrderIds = nextOverColumn.cards.map(card => card._id)
       }
+
+      //console.log('nextColumns :', nextColumns)
 
       return nextColumns
     })
@@ -326,7 +338,7 @@ function BoardContent({ board }) {
   const collisionDetectionStrategy = useCallback((args) => {
     // Nếu là kéo thả cột, dùng closestCorners như thuật toán phát hiện va chạm mặc định của dnd-kit
     if (activeDragItemType === ACTIVE_DRAG_ITENM_TYPE.COLUMN) {
-      return closestCorners(...args)
+      return closestCorners(args)
     }
 
     // tìm các điểm giao nhau / va chạm với con trỏ, trả về mảng va chạm
