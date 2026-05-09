@@ -13,9 +13,9 @@ import {
   defaultDropAnimationSideEffects,
   closestCorners,
   pointerWithin,
-  rectIntersection,
-  getFirstCollision,
-  closestCenter
+  // rectIntersection,
+  getFirstCollision
+  // closestCenter
 } from '@dnd-kit/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -329,16 +329,20 @@ function BoardContent({ board }) {
       return closestCorners(...args)
     }
 
-    // tìm các điểm giao nhau / va chạm với con trỏ
+    // tìm các điểm giao nhau / va chạm với con trỏ, trả về mảng va chạm
     const pointerIntersections = pointerWithin(args)
+    // console.log('Pointer Intersections: ', pointerIntersections)
 
-    // thuật toán phát hiện va chạm trả về mảng các va chạm ở đây
-    const intersections = pointerIntersections?.length > 0
-      ? pointerIntersections
-      : rectIntersection(args)
+    // Nếu kéo ra ngoài hẳn --> không làm gì cả để tránh lỗi, nếu không có va chạm nào thì cũng không làm gì cả
+    if (!pointerIntersections?.length) return
+
+    // // thuật toán phát hiện va chạm trả về mảng các va chạm ở đây
+    // const intersections = pointerIntersections?.length > 0
+    //   ? pointerIntersections
+    //   : rectIntersection(args)
 
     // Tìm overId đầu tiên trong đám intersections ở trên
-    let overId = getFirstCollision(intersections, 'id')
+    let overId = getFirstCollision(pointerIntersections, 'id')
 
     if (overId) {
       // Ý tưởng chính đoạn này : Nếu over là column thì sẽ tìm tới cardId gần nhất bên trong khu vực va chạm đó dựa vào thuật toán phát hiện va chạm closestCorners hoặc closestCenter.
@@ -349,7 +353,7 @@ function BoardContent({ board }) {
       if (intersectColumn) {
         // console.log('overId before: ', overId)
 
-        overId = closestCenter({
+        overId = closestCorners({
           ...args,
           droppableContainers: args.droppableContainers.filter(container => {
             // Loại chính cột đó ( ko quan trọng lắm, chủ yếu là để defense )
